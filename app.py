@@ -18,6 +18,10 @@ G = 4*pi^2 (AU^3 / (M_sun * yr^2)) — стандартная гелиоцент
 возвращает numpy-массивы траекторий. Никакого UI/сервера внутри — это уже задача
 приложения, которое будет вызывать этот код.
 """
+from flask import Flask, request, jsonify
+import numpy as np
+
+app = Flask(__name__)
 
 import numpy as np
 
@@ -234,3 +238,26 @@ if __name__ == "__main__":
     fig = plot_trajectories(traj, masses)
     fig.savefig("orbits.png", dpi=150)
     print(f"Готово: {traj.shape[0]} шагов, {traj.shape[1]} тел. График сохранён в orbits.png")
+@app.route('/calculate', methods=['POST'])
+def calculate():
+    try:
+        # Принимаем данные от вашего приложения AstroForge
+        data = request.json
+        
+        # Пример: вытаскиваем параметры, которые нужны вашей функции body_from_orbit
+        a = float(data.get('a', 1.0))
+        e = float(data.get('e', 0.0))
+        mass_central = float(data.get('mass_central', 1.0))
+        
+        # Вызываем ВАШУ функцию из этого же файла
+        # (замените аргументы на те, что реально принимает функция!)
+        result = body_from_orbit(a, e, mass_central) 
+        
+        # Возвращаем ответ (если результат — массив NumPy, переводим его в список через .tolist())
+        return jsonify({"status": "success", "result": result.tolist() if hasattr(result, 'tolist') else result})
+        
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+if __name__ == '__main__':
+    app.run()
